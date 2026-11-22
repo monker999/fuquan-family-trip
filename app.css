@@ -876,3 +876,4 @@ dialog[open] { margin: auto; }
 .amap-open-actions .text-button { flex: 1 1 auto; }
 /* Leaflet 1.9.4 sets plus-lighter for tile seams, which washes out tiles on light themes. */
 .leaflet-container img.leaflet-tile { mix-blend-mode: normal; }
+.leaflet-container img.leaflet-tile { image-rendering: -webkit-optimize-contrast; }
