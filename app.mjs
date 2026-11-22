@@ -350,6 +350,82 @@ function recordLinks(...collections) {
   });
 }
 
+function wgs84ToGcj02(longitude, latitude) {
+  const lng = Number(longitude);
+  const lat = Number(latitude);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  if (lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271) return { longitude: lng, latitude: lat };
+  const transformLatitude = (x, y) => {
+    let value = -100 + 2 * x + 3 * y + .2 * y * y + .1 * x * y + .2 * Math.sqrt(Math.abs(x));
+    value += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3;
+    value += (20 * Math.sin(y * Math.PI) + 40 * Math.sin(y / 3 * Math.PI)) * 2 / 3;
+    return value + (160 * Math.sin(y / 12 * Math.PI) + 320 * Math.sin(y * Math.PI / 30)) * 2 / 3;
+  };
+  const transformLongitude = (x, y) => {
+    let value = 300 + x + 2 * y + .1 * x * x + .1 * x * y + .1 * Math.sqrt(Math.abs(x));
+    value += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3;
+    value += (20 * Math.sin(x * Math.PI) + 40 * Math.sin(x / 3 * Math.PI)) * 2 / 3;
+    return value + (150 * Math.sin(x / 12 * Math.PI) + 300 * Math.sin(x / 30 * Math.PI)) * 2 / 3;
+  };
+  const radius = 6378245;
+  const eccentricity = .006693421622965943;
+  let deltaLat = transformLatitude(lng - 105, lat - 35);
+  let deltaLng = transformLongitude(lng - 105, lat - 35);
+  const radLat = lat / 180 * Math.PI;
+  let magic = Math.sin(radLat);
+  magic = 1 - eccentricity * magic * magic;
+  const sqrtMagic = Math.sqrt(magic);
+  deltaLat = deltaLat * 180 / ((radius * (1 - eccentricity)) / (magic * sqrtMagic) * Math.PI);
+  deltaLng = deltaLng * 180 / (radius / sqrtMagic * Math.cos(radLat) * Math.PI);
+  return { longitude: lng + deltaLng, latitude: lat + deltaLat };
+}
+
+function buildAmapNativeUrl(url, placeName) {
+  const target = new URL(url);
+  const [longitude, latitude] = (target.searchParams.get("position") || "").split(",");
+  const coordinate = wgs84ToGcj02(longitude, latitude);
+  if (!coordinate) return "";
+  const query = new URLSearchParams({
+    sourceApplication: "travel-wallet",
+    poiname: placeName,
+    lat: String(coordinate.latitude),
+    lon: String(coordinate.longitude),
+    dev: "1",
+  });
+  const scheme = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "iosamap" : "androidamap";
+  return scheme + "://viewMap?" + query.toString();
+}
+
+function openAmapPanel(target) {
+  const panel = $("#amapOpenPanel");
+  if (!panel) return;
+  panel.querySelector("[data-amap-name]").textContent = target.dataset.amapName || "该地点";
+  panel.querySelector("[data-amap-web]").href = target.dataset.amapWeb || "";
+  panel.querySelector("[data-amap-copy]").dataset.amapCopy = target.dataset.amapCopy || "";
+  panel.hidden = false;
+}
+
+function closeAmapPanel() {
+  const panel = $("#amapOpenPanel");
+  if (panel) panel.hidden = true;
+}
+
+function openAmapLocation(target) {
+  const inWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  if (inWeChat) openAmapPanel(target);
+  if (target.dataset.amapNative) window.location.href = target.dataset.amapNative;
+}
+
+async function copyAmapPlace(button) {
+  try {
+    await navigator.clipboard.writeText(button.dataset.amapCopy || "");
+    toast("地点名已复制");
+  } catch {
+    toast("复制失败，请长按地点名复制");
+  }
+}
+
+
 function itineraryStopCard(item) {
   const place = state.pack.places.find((entry) => entry.id === item.placeId);
   const links = recordLinks(item.links || [], place?.links || []);
@@ -359,6 +435,7 @@ function itineraryStopCard(item) {
   const amapUrl = location?.coordinateSystem === "WGS84" && Number.isFinite(location.longitude) && Number.isFinite(location.latitude)
     ? `https://uri.amap.com/marker?position=${location.longitude},${location.latitude}&name=${encodeURIComponent(placeName)}&coordinate=wgs84&callnative=1&src=travel-wallet`
     : "";
+  const amapNativeUrl = amapUrl ? buildAmapNativeUrl(amapUrl, placeName) : "";
   return `<article class="route-stop ${state.selectedMapItemId === item.id ? "is-selected" : ""}" data-map-item="${esc(item.id)}" data-drag-item="${esc(item.id)}">
     <span class="stop-index">${item.displayOrder || item.order + 1}</span>
     <div class="stop-card">
@@ -370,7 +447,7 @@ function itineraryStopCard(item) {
       </header>
       <div class="stop-card-body">
         <span class="stop-visual">${icon(item.kind === "meal" ? "utensils" : item.kind === "shopping" ? "shopping-bag" : "map-pin")}</span>
-        <div class="stop-main">${amapUrl ? `<a class="stop-nav-link" href="${esc(amapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="在高德地图打开${esc(placeName)}"><h3>${esc(placeName)} ${icon("navigation")}</h3></a>` : `<h3>${esc(placeName)}</h3>`}<p>${esc(item.notes || place?.notes || "行程说明待补充")}</p></div>
+        <div class="stop-main">${amapUrl ? `<button class="stop-nav-link" type="button" data-amap-open="true" data-amap-name="${esc(placeName)}" data-amap-copy="${esc(placeName)}" data-amap-web="${esc(amapUrl)}" data-amap-native="${esc(amapNativeUrl)}" aria-label="在高德地图打开${esc(placeName)}"><h3>${esc(placeName)} ${icon("navigation")}</h3></button>` : `<h3>${esc(placeName)}</h3>`}<p>${esc(item.notes || place?.notes || "行程说明待补充")}</p></div>
       </div>
       ${hasDetails ? `<details class="place-details"><summary>查看地点详情与攻略</summary><div class="place-detail-body">${place?.address ? `<p>${icon("map-pin")} ${esc(place.address)}</p>` : ""}${links.length ? `<div class="place-links">${links.map((link) => `<a href="${esc(link.safe)}" target="_blank" rel="noopener noreferrer">${esc(link.title || "攻略链接")} ${icon("arrow-up-right")}</a>`).join("")}</div>` : ""}</div></details>` : ""}
     </div>
@@ -697,6 +774,12 @@ async function ensureEditReady() {
 }
 
 document.addEventListener("click", async (event) => {
+  const amapTarget = event.target.closest("[data-amap-open]");
+  if (amapTarget) return openAmapLocation(amapTarget);
+  const dismissPanel = event.target.closest("[data-amap-dismiss]");
+  if (dismissPanel) return closeAmapPanel();
+  const copyButton = event.target.closest("[data-amap-copy]");
+  if (copyButton) return void copyAmapPlace(copyButton);
   const button = event.target.closest("button");
   if (!button || !state.pack) return;
   const { tab, purpose, segment, day, currency, expensePanel, materialKind, openAttachments, attachmentMaterialId, openEditor, openSection, recordId, shiftItem, direction, exportIcs, deleteKind, defaultDay, mapMode, selectMapItem, openMapItem, calendarTask } = button.dataset;

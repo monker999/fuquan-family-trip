@@ -862,8 +862,15 @@ dialog[open] { margin: auto; }
   .heading-actions .text-button { padding-inline: 9px; }
 }
 
-/* Location cards link to the official AMap URI. */
-.stop-nav-link { color: inherit; text-decoration: none; }
+/* Location cards try the native AMap app, with an explicit in-app-browser fallback. */
+.stop-nav-link { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .stop-nav-link:hover h3 { color: var(--blue); }
 .stop-nav-link svg { width: 14px; height: 14px; margin-left: 4px; vertical-align: -2px; }
 .stop-nav-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+.amap-open-panel { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(9, 18, 31, .48); }
+.amap-open-panel[hidden] { display: none; }
+.amap-open-card { width: min(360px, 100%); padding: 20px; border: 1px solid var(--line); border-radius: var(--radius-dialog); background: var(--paper); box-shadow: var(--shadow); }
+.amap-open-card h2 { margin: 0 0 8px; font-size: 18px; }
+.amap-open-card p { margin: 0 0 15px; color: var(--muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.amap-open-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.amap-open-actions .text-button { flex: 1 1 auto; }
