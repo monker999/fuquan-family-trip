@@ -874,3 +874,5 @@ dialog[open] { margin: auto; }
 .amap-open-card p { margin: 0 0 15px; color: var(--muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .amap-open-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .amap-open-actions .text-button { flex: 1 1 auto; }
+/* Leaflet 1.9.4 sets plus-lighter for tile seams, which washes out tiles on light themes. */
+.leaflet-container img.leaflet-tile { mix-blend-mode: normal; }

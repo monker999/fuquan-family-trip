@@ -541,11 +541,11 @@ function mountMap() {
     }).catch(() => {
       if (adapterSession.cancelled) return;
       state.map = null;
-      mountOpenStreetMap(host, "宿主地图暂时不可用，已启用 OpenStreetMap 保底底图。");
+      mountOpenStreetMap(host, "宿主地图暂时不可用，已切换 OpenStreetMap 可缩放底图。");
     });
     return;
   }
-  mountOpenStreetMap(host, "未接入宿主地图，已启用 OpenStreetMap 保底底图。");
+  mountOpenStreetMap(host, "已使用 OpenStreetMap 可缩放底图。");
 }
 
 function mountOpenStreetMap(host, fallbackNotice = "") {
@@ -574,8 +574,8 @@ function mountOpenStreetMap(host, fallbackNotice = "") {
     window.clearTimeout(state.mapFallbackTimer);
     state.mapFallbackTimer = null;
   });
-  tiles.on("tileerror", () => useFallback("底图暂时无法加载，已切换为绘图式路线图。"));
-  state.mapFallbackTimer = window.setTimeout(() => useFallback("地图加载超时，已切换为绘图式路线图。"), 2600);
+  tiles.on("tileerror", () => useFallback("在线底图暂时无法加载，已切换为绘图式路线图。"));
+  state.mapFallbackTimer = window.setTimeout(() => useFallback("在线底图加载超时，已切换为绘图式路线图。"), 2600);
   let displayOrder = 0;
   visibleDays.forEach((day, dayIndex) => {
     let previous = null;
