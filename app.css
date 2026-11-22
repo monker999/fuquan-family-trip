@@ -861,3 +861,9 @@ dialog[open] { margin: auto; }
   .heading-actions .compact-label { display: inline; }
   .heading-actions .text-button { padding-inline: 9px; }
 }
+
+/* Location cards link to the official AMap URI. */
+.stop-nav-link { color: inherit; text-decoration: none; }
+.stop-nav-link:hover h3 { color: var(--blue); }
+.stop-nav-link svg { width: 14px; height: 14px; margin-left: 4px; vertical-align: -2px; }
+.stop-nav-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }

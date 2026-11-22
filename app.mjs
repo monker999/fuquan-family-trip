@@ -354,6 +354,11 @@ function itineraryStopCard(item) {
   const place = state.pack.places.find((entry) => entry.id === item.placeId);
   const links = recordLinks(item.links || [], place?.links || []);
   const hasDetails = Boolean(place?.address || place?.notes || item.notes || links.length);
+  const placeName = place?.name || item.title || "自由活动";
+  const location = place?.location;
+  const amapUrl = location?.coordinateSystem === "WGS84" && Number.isFinite(location.longitude) && Number.isFinite(location.latitude)
+    ? `https://uri.amap.com/marker?position=${location.longitude},${location.latitude}&name=${encodeURIComponent(placeName)}&coordinate=wgs84&callnative=1&src=travel-wallet`
+    : "";
   return `<article class="route-stop ${state.selectedMapItemId === item.id ? "is-selected" : ""}" data-map-item="${esc(item.id)}" data-drag-item="${esc(item.id)}">
     <span class="stop-index">${item.displayOrder || item.order + 1}</span>
     <div class="stop-card">
@@ -365,7 +370,7 @@ function itineraryStopCard(item) {
       </header>
       <div class="stop-card-body">
         <span class="stop-visual">${icon(item.kind === "meal" ? "utensils" : item.kind === "shopping" ? "shopping-bag" : "map-pin")}</span>
-        <div class="stop-main"><h3>${esc(place?.name || item.title || "自由活动")}</h3><p>${esc(item.notes || place?.notes || "行程说明待补充")}</p></div>
+        <div class="stop-main">${amapUrl ? `<a class="stop-nav-link" href="${esc(amapUrl)}" target="_blank" rel="noopener noreferrer" aria-label="在高德地图打开${esc(placeName)}"><h3>${esc(placeName)} ${icon("navigation")}</h3></a>` : `<h3>${esc(placeName)}</h3>`}<p>${esc(item.notes || place?.notes || "行程说明待补充")}</p></div>
       </div>
       ${hasDetails ? `<details class="place-details"><summary>查看地点详情与攻略</summary><div class="place-detail-body">${place?.address ? `<p>${icon("map-pin")} ${esc(place.address)}</p>` : ""}${links.length ? `<div class="place-links">${links.map((link) => `<a href="${esc(link.safe)}" target="_blank" rel="noopener noreferrer">${esc(link.title || "攻略链接")} ${icon("arrow-up-right")}</a>`).join("")}</div>` : ""}</div></details>` : ""}
     </div>
