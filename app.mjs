@@ -59,6 +59,7 @@ const state = {
 };
 
 const $ = (selector) => document.querySelector(selector);
+const elementFromEvent = (event) => event.target instanceof Element ? event.target : null;
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({
   "&": "&amp;",
   "<": "&lt;",
@@ -774,13 +775,13 @@ async function ensureEditReady() {
 }
 
 document.addEventListener("click", async (event) => {
-  const amapTarget = event.target.closest("[data-amap-open]");
+  const amapTarget = elementFromEvent(event)?.closest("[data-amap-open]");
   if (amapTarget) return openAmapLocation(amapTarget);
-  const dismissPanel = event.target.closest("[data-amap-dismiss]");
+  const dismissPanel = elementFromEvent(event)?.closest("[data-amap-dismiss]");
   if (dismissPanel) return closeAmapPanel();
-  const copyButton = event.target.closest("[data-amap-copy]");
+  const copyButton = elementFromEvent(event)?.closest("[data-amap-copy]");
   if (copyButton) return void copyAmapPlace(copyButton);
-  const button = event.target.closest("button");
+  const button = elementFromEvent(event)?.closest("button");
   if (!button || !state.pack) return;
   const { tab, purpose, segment, day, currency, expensePanel, materialKind, openAttachments, attachmentMaterialId, openEditor, openSection, recordId, shiftItem, direction, exportIcs, deleteKind, defaultDay, mapMode, selectMapItem, openMapItem, calendarTask } = button.dataset;
   if (state.hideExpenses && (tab === "expenses" || openEditor === "expense" || openSection === "expenses")) return;
@@ -852,7 +853,7 @@ document.addEventListener("click", async (event) => {
 });
 
 document.addEventListener("change", async (event) => {
-  const input = event.target.closest("input[data-toggle-task]");
+  const input = elementFromEvent(event)?.closest("input[data-toggle-task]");
   if (input && state.pack) {
     input.disabled = true;
     const saved = await toggleTaskStatus(input.dataset.toggleTask);
@@ -862,15 +863,15 @@ document.addEventListener("change", async (event) => {
 });
 
 document.addEventListener("dragstart", (event) => {
-  if (event.target.closest("[data-touch-drag], [data-drag-item]")) event.preventDefault();
+  if (elementFromEvent(event)?.closest("[data-touch-drag], [data-drag-item]")) event.preventDefault();
 });
 
 document.addEventListener("selectstart", (event) => {
-  if (event.target.closest("[data-touch-drag]")) event.preventDefault();
+  if (elementFromEvent(event)?.closest("[data-touch-drag]")) event.preventDefault();
 });
 
 document.addEventListener("pointerdown", (event) => {
-  const handle = event.target.closest("[data-touch-drag]");
+  const handle = elementFromEvent(event)?.closest("[data-touch-drag]");
   if (!handle || state.mode !== "edit" || (event.pointerType === "mouse" && event.button !== 0)) return;
   state.dragItemId = handle.dataset.touchDrag;
   state.touchDropTarget = null;
@@ -963,7 +964,7 @@ function applyStyle(style, persist = true) {
 
 $("#styleButton").addEventListener("click", () => $("#styleDialog").showModal());
 $("#styleDialog").addEventListener("click", (event) => {
-  const choice = event.target.closest("[data-style-choice]");
+  const choice = elementFromEvent(event)?.closest("[data-style-choice]");
   if (choice) applyStyle(choice.dataset.styleChoice);
 });
 $("#styleDialogClose").addEventListener("click", () => $("#styleDialog").close());
@@ -1379,7 +1380,7 @@ $("#maintenanceCancel").addEventListener("click", closeMaintenance);
 
 $("#maintenanceDialog").addEventListener("click", async (event) => {
   event.stopPropagation();
-  const button = event.target.closest("button");
+  const button = elementFromEvent(event)?.closest("button");
   if (!button) return;
   const data = button.dataset;
   if (data.maintenanceSection) {
@@ -1448,12 +1449,12 @@ $("#maintenanceDialog").addEventListener("click", async (event) => {
 });
 
 $("#maintenanceDialog").addEventListener("input", (event) => {
-  const form = event.target.closest("[data-form-kind='expense']");
+  const form = elementFromEvent(event)?.closest("[data-form-kind='expense']");
   if (form) syncExpenseSplit(form);
 });
 
 $("#maintenanceDialog").addEventListener("change", (event) => {
-  const form = event.target.closest("[data-form-kind='expense']");
+  const form = elementFromEvent(event)?.closest("[data-form-kind='expense']");
   if (form) syncExpenseSplit(form);
 });
 
@@ -1715,7 +1716,7 @@ $("#linksDialogClose").addEventListener("click", closeLinksDialog);
 $("#linksCancel").addEventListener("click", closeLinksDialog);
 $("#rotateLinksButton").addEventListener("click", rotateLinks);
 $("#linksDialog").addEventListener("click", async (event) => {
-  const button = event.target.closest("[data-copy-link]");
+  const button = elementFromEvent(event)?.closest("[data-copy-link]");
   if (!button) return;
   const value = $(`#${button.dataset.copyLink}`).value;
   await navigator.clipboard.writeText(value);

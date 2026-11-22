@@ -50,9 +50,14 @@ function loadAmap() {
   if (window.AMap) return Promise.resolve(window.AMap);
   if (!config.webKey) return Promise.reject(new Error("Gaode web key is not configured"));
   if (!window.__travelAmapPromise) {
-    const security = config.securityCode ? `&securityJsCode=${encodeURIComponent(config.securityCode)}` : "";
+    if (config.securityCode) {
+      window._AMapSecurityConfig = {
+        ...(window._AMapSecurityConfig || {}),
+        securityJsCode: config.securityCode,
+      };
+    }
     const plugins = "AMap.Polyline,AMap.Marker,AMap.ToolBar,AMap.Scale";
-    const url = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(config.webKey)}&plugin=${plugins}${security}`;
+    const url = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(config.webKey)}&plugin=${plugins}`;
     window.__travelAmapPromise = loadScript(url).then(() => {
       if (!window.AMap) throw new Error("Gaode JS API did not initialize");
       return window.AMap;
@@ -97,11 +102,15 @@ async function mount({ element, days, selectedDayId }) {
       }
       const position = wgs84ToGcj02(location.longitude, location.latitude);
       bounds.push(position);
+      const markerContent = document.createElement("div");
+      markerContent.className = "route-amap-pin";
+      markerContent.textContent = String(number);
       const marker = new AMap.Marker({
         map,
         position,
         title: stop.name,
-        label: { content: String(number), direction: "center" },
+        content: markerContent,
+        anchor: "center",
         zIndex: 100 + number,
       });
       marker.on("click", () => element.dispatchEvent(new CustomEvent("travel:select-stop", {
@@ -141,4 +150,4 @@ async function mount({ element, days, selectedDayId }) {
   };
 }
 
-window.TRAVEL_MAP_ADAPTER = { provider: "高德地图", mount };
+window.TRAVEL_MAP_ADAPTER = { provider: "高德", mount };
