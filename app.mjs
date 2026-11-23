@@ -182,6 +182,15 @@ function safeUrl(value) {
   }
 }
 
+function recordLinks(...collections) {
+  const seen = new Set();
+  return collections.flat().map((link) => ({ ...link, safe: safeUrl(link?.url) })).filter((link) => {
+    if (!link.safe || seen.has(link.safe)) return false;
+    seen.add(link.safe);
+    return true;
+  });
+}
+
 function formatDate(value, options = {}) {
   if (!value) return "日期待定";
   const date = new Date(`${value}T12:00:00+08:00`);
@@ -342,15 +351,6 @@ function transferText(current, next) {
   return connectionSummary(current, next)?.text || "衔接时间待补充";
 }
 
-function recordLinks(...collections) {
-  const seen = new Set();
-  return collections.flat().map((link) => ({ ...link, safe: safeUrl(link?.url) })).filter((link) => {
-    if (!link.safe || seen.has(link.safe)) return false;
-    seen.add(link.safe);
-    return true;
-  });
-}
-
 function wgs84ToGcj02(longitude, latitude) {
   const lng = Number(longitude);
   const lat = Number(latitude);
@@ -427,6 +427,13 @@ async function copyAmapPlace(button) {
 }
 
 
+function placeImage(place) {
+  const picture = place?.picture;
+  const url = safeUrl(picture?.url);
+  if (!url) return "";
+  return `<figure class="stop-photo"><img src="${esc(url)}" alt="${esc(picture.alt || place.name || "地点照片")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.stop-photo').hidden=true">${picture.credit ? `<figcaption>${esc(picture.credit)}</figcaption>` : ""}</figure>`;
+}
+
 function itineraryStopCard(item) {
   const place = state.pack.places.find((entry) => entry.id === item.placeId);
   const links = recordLinks(item.links || [], place?.links || []);
@@ -446,6 +453,7 @@ function itineraryStopCard(item) {
         <span class="tag">${esc(labels[item.kind] || item.kind)}</span>
         ${state.mode === "edit" ? `<div class="stop-menu"><button data-open-editor="itinerary" data-record-id="${esc(item.id)}" aria-label="编辑">${icon("pencil")}</button><button class="danger" data-delete-kind="itinerary" data-record-id="${esc(item.id)}" aria-label="删除">${icon("trash-2")}</button></div>` : ""}
       </header>
+      ${placeImage(place)}
       <div class="stop-card-body">
         <span class="stop-visual">${icon(item.kind === "meal" ? "utensils" : item.kind === "shopping" ? "shopping-bag" : "map-pin")}</span>
         <div class="stop-main">${amapUrl ? `<button class="stop-nav-link" type="button" data-amap-open="true" data-amap-name="${esc(placeName)}" data-amap-copy="${esc(placeName)}" data-amap-web="${esc(amapUrl)}" data-amap-native="${esc(amapNativeUrl)}" aria-label="在高德地图打开${esc(placeName)}"><h3>${esc(placeName)} ${icon("navigation")}</h3></button>` : `<h3>${esc(placeName)}</h3>`}<p>${esc(item.notes || place?.notes || "行程说明待补充")}</p></div>
@@ -529,7 +537,10 @@ function mountMap() {
       },
     };
     const payload = mapPayload();
-    Promise.resolve(mapAdapter.mount({ element: host, ...payload })).then((controller) => {
+    Promise.resolve(mapAdapter.mount({ element: host, ...payload })).catch((error) => {
+      console.warn("[travel-map] host map mount failed", error);
+      throw error;
+    }).then((controller) => {
       if (!adapterSession.cancelled) {
         host.addEventListener("travel:select-stop", (event) => {
           state.selectedMapItemId = event.detail;
@@ -645,7 +656,7 @@ function renderMapDetail() {
   if (!item) return void (host.innerHTML = "");
   const place = state.pack.places.find((entry) => entry.id === item.placeId);
   const links = recordLinks(item.links || [], place?.links || []);
-  host.innerHTML = `<article class="map-detail-card"><span class="map-detail-visual">${icon("map-pin")}</span><div><h4>${esc(place?.name || "行程地点")}</h4><p>${esc(place?.address || labels[item.kind] || "地点信息待补充")}</p><small>${esc(item.startTime || "—")}–${esc(item.endTime || "—")} · 约 ${esc(durationLabel(item.startTime, item.endTime))}</small></div><button data-open-map-item="${esc(item.id)}">查看详情 ${icon("arrow-up-right")}</button>${links[0] ? `<a href="${esc(links[0].safe)}" target="_blank" rel="noopener noreferrer">攻略链接</a>` : ""}</article>`;
+  host.innerHTML = `<article class="map-detail-card">${placeImage(place)}<span class="map-detail-visual">${icon("map-pin")}</span><div><h4>${esc(place?.name || "行程地点")}</h4><p>${esc(place?.address || labels[item.kind] || "地点信息待补充")}</p><small>${esc(item.startTime || "—")}–${esc(item.endTime || "—")} · 约 ${esc(durationLabel(item.startTime, item.endTime))}</small></div><button data-open-map-item="${esc(item.id)}">查看详情 ${icon("arrow-up-right")}</button>${links[0] ? `<a href="${esc(links[0].safe)}" target="_blank" rel="noopener noreferrer">攻略链接</a>` : ""}</article>`;
   refreshIcons();
 }
 

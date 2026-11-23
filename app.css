@@ -570,6 +570,9 @@ dialog::backdrop { background: rgba(3, 14, 28, .58); backdrop-filter: blur(3px);
 .route-stop.is-selected .stop-card { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
 .stop-index { width: 22px; height: 22px; margin-top: 20px; display: grid; place-items: center; position: relative; z-index: 1; border-radius: 50%; color: white; background: var(--blue); font: 700 11px/1 Consolas, monospace; }
 .stop-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); transition: border-color .16s ease, box-shadow .16s ease; }
+.stop-photo { height: 132px; margin: 0; overflow: hidden; position: relative; background: var(--surface); }
+.stop-photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.stop-photo figcaption { position: absolute; right: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 3px 7px; overflow: hidden; border-radius: 6px; color: #fff; background: #17243acc; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .stop-card-top { min-height: 54px; padding: 5px 9px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--line); }
 .stop-clock { min-width: 0; flex: 1 1 auto; display: flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 11px; }
 .stop-clock b { font: 700 12px/1 Consolas, monospace; }
@@ -615,6 +618,7 @@ body.drag-active { cursor: grabbing; user-select: none; -webkit-user-select: non
 :root[data-theme="dark"] .map-marker span { color: #edf4ff; background: #142238e8; }
 :root[data-theme="dark"] .map-marker b { border-color: #1c2b3f; }
 .map-north { position: absolute; right: 14px; top: 14px; color: var(--muted); font-size: 10px; text-align: center; }
+.map-detail-card .stop-photo { height: 68px; grid-column: 1 / -1; border-radius: 6px; }
 .map-detail-card { margin-top: 10px; padding: 11px; display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
 .map-detail-visual { width: 52px; height: 48px; display: grid; place-items: center; border-radius: 8px; color: var(--blue); background: var(--blue-soft); }
 .map-detail-card h4, .map-detail-card p { margin: 0; }
@@ -672,6 +676,7 @@ dialog[open] { margin: auto; }
   .stop-clock { gap: 3px; }
   .stop-clock .lucide { width: 15px; }
   .stop-card-top .tag { max-width: 54px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stop-photo { height: 108px; }
   .stop-card-body { grid-template-columns: 42px minmax(0,1fr); padding: 12px; }
   .stop-visual { width: 42px; height: 42px; }
   .alternative-card { grid-template-columns: 38px minmax(0,1fr); }
