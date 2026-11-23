@@ -175,8 +175,9 @@ function refreshIcons() {
 
 function safeUrl(value) {
   try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+    const url = new URL(value, window.location.href);
+    if (url.origin !== window.location.origin) return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+    return url.href;
   } catch {
     return null;
   }

@@ -1,3 +1,5 @@
+import { wgs84ToGcj02 } from "./maintenance.mjs";
+
 const config = window.TRAVEL_AMAP_CONFIG || {};
 const mapConfig = document.querySelector('#travelpack-map-config')?.textContent || '{}';
 try { Object.assign(config, JSON.parse(mapConfig)); } catch {}
@@ -46,6 +48,8 @@ function withTimeout(promise, delay, message) {
   });
 }
 
+let activeMap = null;
+
 async function mount({ element, days, selectedDayId }) {
   const visibleDays = selectedDayId === "all"
     ? days
@@ -54,13 +58,14 @@ async function mount({ element, days, selectedDayId }) {
   const stops = visibleDays.flatMap((day) => day.stops
     .filter((stop) => stop.location?.coordinateSystem === "WGS84")
     .map((stop) => ({ day, stop })));
-  const positions = new Map(stops.map((stop) => [stop.stop.id, [stop.stop.location.longitude, stop.stop.location.latitude]]));
+  const positions = new Map(stops.map((stop) => { const position = wgs84ToGcj02(stop.stop.location.longitude, stop.stop.location.latitude); return [stop.stop.id, [position.longitude, position.latitude]]; }));
   const firstPosition = stops.length ? positions.get(stops[0].stop.id) : [119.3, 26.1];
   const map = new AMap.Map(element, {
     zoom: stops.length ? 12 : 10,
     center: firstPosition,
     viewMode: "2D",
   });
+  activeMap = map;
   map.addControl(new AMap.ToolBar({ position: "RB" }));
   map.addControl(new AMap.Scale());
   const overlays = [];
@@ -119,10 +124,11 @@ async function mount({ element, days, selectedDayId }) {
     remove() {
       overlays.forEach((overlay) => overlay.setMap(null));
       map.destroy();
+      if (activeMap === map) activeMap = null;
       element.removeEventListener("mousedown", stopPropagation);
       element.removeEventListener("touchstart", stopPropagation);
     },
   };
 }
 
-window.TRAVEL_MAP_ADAPTER = { provider: "高德", mount };
+window.TRAVEL_MAP_ADAPTER = { provider: "高德", mount, getMap: () => activeMap };

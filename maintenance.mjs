@@ -224,6 +224,18 @@ export function gcj02ToWgs84(longitude, latitude) {
   return { longitude: lng * 2 - (lng + deltaLng), latitude: lat * 2 - (lat + deltaLat), coordinateSystem: "WGS84" };
 }
 
+export function wgs84ToGcj02(longitude, latitude) {
+  const converted = gcj02ToWgs84(longitude, latitude);
+  if (converted.longitude === Number(longitude) && converted.latitude === Number(latitude)) {
+    return converted;
+  }
+  return {
+    longitude: Number(longitude) * 2 - converted.longitude,
+    latitude: Number(latitude) * 2 - converted.latitude,
+    coordinateSystem: "GCJ02",
+  };
+}
+
 export function dueDateFromAdvance(targetDate, daysBefore) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate || "")) throw new Error("目标日期格式有误。");
   const days = Number(daysBefore);
